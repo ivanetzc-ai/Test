@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="uk">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Тест: WebOTP / читання SMS</title>
+<style>
+  body{font-family:Inter,Arial,Helvetica,sans-serif;padding:18px;line-height:1.4}
+  section{margin-bottom:20px;padding:12px;border:1px solid #ddd;border-radius:8px}
+  button{margin:6px 0;padding:8px 12px}
+  pre{background:#f7f7f7;padding:8px;border-radius:6px;overflow:auto}
+</style>
+</head>
+<body>
+<h2>Тест: WebOTP / Читання SMS</h2>
+
+<section id="webotp">
+  <h3>Отримати OTP з SMS</h3>
+  <p>Натисни: <button id="requestOtp">Запитати OTP через WebOTP API</button></p>
+  <pre id="otpOut">Результат тут</pre>
+  <p><strong>Формат SMS (сервер має відправляти):</strong></p>
+  <pre>
+// Приклад SMS:
+// <#> Your verification code is: 123456
+// @example.com #123AbCdEfGh
+  </pre>
+  <p>Примітка: WebOTP працює лише для коротких кодів (OTP) і в певних браузерах на мобільних пристроях через HTTPS.</p>
+</section>
+
+<script>
+document.getElementById('requestOtp').onclick = async ()=>{
+  const out = document.getElementById('otpOut');
+  out.textContent = 'Запит... (працює тільки на мобільних/HTTPS та якщо браузер підтримує)';
+  try {
+    if (!('OTPCredential' in window) && !('credentials' in navigator)) {
+      out.textContent = 'WebOTP не підтримується в цьому браузері.';
+      return;
+    }
+    const ac = new AbortController();
+    setTimeout(()=>ac.abort(), 60000); // таймаут 60 сек
+    const cred = await navigator.credentials.get({
+      otp: { transport: ['sms'] },
+      signal: ac.signal
+    });
+    if (cred && cred.code) {
+      out.textContent = 'OTP отриманий: ' + cred.code;
+    } else {
+      out.textContent = 'OTP не отриманий або відмова.';
+    }
+  } catch (err) {
+    out.textContent = 'Помилка WebOTP: ' + (err && err.message);
+  }
+};
+</script>
+</body>
+</html>
